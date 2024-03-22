@@ -83,3 +83,7 @@ def ultimo_ano(row):
         elif row['PONTO_VIRADA_2022'] in ['Sim', 'Não']:
             return 2022
     return pd.NA
+
+@st.cache_data
+def _get_modelling_data(df):
+    return df

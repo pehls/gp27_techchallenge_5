@@ -12,7 +12,8 @@ st.title('Modelo')
 
 tab_modelagem_inicial, tab_resultados_iniciais, tab_conceitos, tab_variaveis, tab_simulacao, tab_deploy_producao = st.tabs(['Modelagem', "Resultados", 'Conceitos', "Importância das Variáveis", "Simulação", "Plano - Deploy em Produção"])
 
-df_petroleo = get_data._get_modelling_data()
+df_base = get_data._df_passos_magicos()
+df_model = get_data._get_modelling_data()
 
 with tab_modelagem_inicial:
     st.markdown("""
