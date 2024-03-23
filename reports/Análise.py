@@ -10,13 +10,12 @@ st.write("""
     ## Passos Mágicos / 
     by. Eduardo Gomes, Igor Brito e Gabriel Pehls
 """)
-         
 st.info(f"""
     Com objetivo de predizer o valor do Petróleo Brent, mostramos nesse trabalho
     todo o processo para criação do nosso modelo, e algumas análises do histórico do mesmo.
     
     Os dados aqui utilizados foram recebidos da Passos Mágicos
-    e contemplam o período de {min(df_base.YEAR)} até {max(df_base.YEAR)}.
+    e contemplam o período de {min(df_base.dropna(axis=0, subset=['ULTIMO_ANO']).ULTIMO_ANO)} até {max(df_base.dropna(axis=0, subset=['ULTIMO_ANO']).ULTIMO_ANO)}.
 """)
         
 
@@ -26,15 +25,15 @@ with tab_socio_economicos:
     st.markdown(f"""
     """)
 
-    st.plotly_chart(
-        get_data.plot_corr(df_base)
-    )
-
+    
 with tab_correlacoes:
 
     st.markdown(f"""
     """)
-    
+    st.plotly_chart(
+        generate_graphs.plot_corr(df_base)
+    )
+
     st.divider()
 
     st.markdown(f"""

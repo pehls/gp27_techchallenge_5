@@ -1,6 +1,4 @@
 import pandas as pd
-from sklearn.model_selection import TimeSeriesSplit
-from prophet import Prophet
 from sklearn.metrics import (mean_absolute_error, 
                              mean_squared_error, 
                              mean_absolute_percentage_error,
@@ -10,28 +8,16 @@ from xgboost import XGBRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
-from sklearn.feature_selection import SelectPercentile, chi2
 from sklearn.preprocessing import OneHotEncoder, MinMaxScaler, StandardScaler
-from sklearn.model_selection import RandomizedSearchCV, train_test_split
-from sklearn.metrics import mean_absolute_percentage_error
+
+from sklearn.impute import SimpleImputer
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.model_selection import train_test_split
+import shap
 import joblib
 import os
 import streamlit as st
 import numpy as np
-
-@st.cache_resource
-def _train_simple_prophet(_df):
-    _model = Prophet()
-
-    train_end = pd.to_datetime('2023-01-01')
-    X_train = _df.loc[_df.ds < train_end]
-    X_test = _df.loc[_df.ds >= train_end]
-
-    _model.fit(X_train)
-    forecast_ = _model.predict(X_train)
-    pred = _model.predict(X_test)
-    _df = pd.concat([_df, _model.predict(_df)])
-    return _model, X_test, pred, X_train, forecast_, _df
 
 @st.cache_resource
 def _run_xgboost(df_final, path='models/xgb_model.pkl', predict=False):
@@ -151,13 +137,21 @@ def check_causality(data : pd.DataFrame, list_of_best_features : list, y_col : s
     return g_matrix[['Variable','Sign.']]
 
 @st.cache_data
-def adjust_predict_data(df_final, dict_cols, _model):
-    for col in dict_cols:
-        df_final[col] = df_final[col] * (1+dict_cols[col])
-    res = _model(df_final)
-    df_res = pd.DataFrame([df_final['Year'], res['predictions'], df_final['Preco']], index=['Year','Predições','Preço Real']).T
-    mpe = round(np.mean((df_final['Preco'] - res['predictions'])/df_final['Preco']) * 100, 2)
-    return {
-          'predictions':df_res
-        , 'mpe': f"{mpe}%"
-    }
+def _get_shapley_values(df):
+    cols = list(set(df.columns) - set(['EVADIU']))
+    shap.initjs()
+    _input_missings = SimpleImputer(strategy="median")
+    df.loc[:, cols] = pd.DataFrame(_input_missings.fit_transform(df.loc[:, cols]), columns=cols)
+    df = df.dropna(axis=0)
+
+    X_train, X_test, y_train, y_test = train_test_split(
+       df[cols], df['EVADIU'], test_size=0.2, random_state=42, shuffle=False
+    )
+
+    rf_estimator = GradientBoostingClassifier(random_state=42)
+
+    rf_estimator.fit(X_train, y_train)
+
+    explainer = shap.TreeExplainer(rf_estimator)
+    shap_values = explainer.shap_values(X_train)
+    return X_train, y_train, shap_values, explainer

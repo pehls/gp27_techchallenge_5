@@ -3,14 +3,9 @@ import numpy as np
 import config
 import streamlit as st
 
-from sklearn.impute import SimpleImputer
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.model_selection import train_test_split
-import shap
-
 @st.cache_data
 def _df_passos_magicos():
-    df = pd.read_csv('../data/raw/PEDE_PASSOS_DATASET_FIAP.csv', sep=';')
+    df = pd.read_csv('data/raw/PEDE_PASSOS_DATASET_FIAP.csv', sep=';')
     df_evasao = _generate_df_evasao(df)
     # Mesclar os DataFrames com base na coluna 'NOME'
     df = df.merge(df_evasao[['NOME', 'EVADIU', 'ULTIMO_ANO']], on='NOME', how='left')
@@ -23,27 +18,12 @@ def _df_passos_magicos():
 
 @st.cache_data
 def _df_boruta_shap(df):
-    shap.initjs()
     cols = ['INDE_2020', 'IAA_2020', 'IEG_2020', 'IPS_2020', 'IDA_2020', 'IPP_2020', 'IPV_2020', 'IAN_2020',
             'INDE_2021', 'IAA_2021', 'IEG_2021', 'IPS_2021', 'IDA_2021', 'IPP_2021', 'IPV_2021', 'IAN_2021',
             'INDE_2022', 'IAA_2022', 'IEG_2022', 'IPS_2022', 'IDA_2022', 'IPP_2022', 'IPV_2022', 'IAN_2022', 'CG_2022', 'CF_2022', 'CT_2022',]
     df = df[cols + ['EVADIU']]
-
-    _input_missings = SimpleImputer(strategy="median")
-    df.loc[:, cols] = pd.DataFrame(_input_missings.fit_transform(df.loc[:, cols]), columns=cols)
-    df = df.dropna(axis=0)
-
-    X_train, X_test, y_train, y_test = train_test_split(
-       df[cols], df['EVADIU'], test_size=0.2, random_state=42, shuffle=False
-    )
-
-    rf_estimator = GradientBoostingClassifier(random_state=42)
-
-    rf_estimator.fit(X_train, y_train)
-
-    explainer = shap.TreeExplainer(rf_estimator)
-    shap_values = explainer.shap_values(X_train)
-    return df, X_train, y_train, shap_values, explainer
+    
+    return df
 
 @st.cache_data
 def _df_corr(df):
@@ -87,3 +67,7 @@ def ultimo_ano(row):
 @st.cache_data
 def _get_modelling_data(df):
     return df
+
+@st.cache_data
+def _read_file(file):
+    return pd.read_excel(file)
