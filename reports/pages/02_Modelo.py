@@ -86,10 +86,6 @@ with tab_imp_variaveis:
     )
 
 with tab_shap_values:
-    st.components.v1.html(
-        generate_graphs.plot_shap_force_plot(df_model),
-        height=400
-    )
     st.pyplot(
         generate_graphs.plot_shap_summary_plot(df_model)
     )
