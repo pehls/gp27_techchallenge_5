@@ -119,7 +119,6 @@ def _h_bar_plot(df, x_col, y_col, operation = None, title=''):
     if (operation):
         df[y_col] = df[y_col].astype(float, errors='ignore')
         df = df.groupby(x_col).agg({y_col : operations[operation]}).reset_index().reset_index().sort_values(y_col)
-        print(df)
     fig = px.bar(
         df
         , x=y_col, y=x_col, orientation='h'
