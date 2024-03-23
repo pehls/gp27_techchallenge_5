@@ -5,6 +5,14 @@ import time
 st.set_page_config(layout='wide')
 st.title('Dados Sócio-Econômicos')
 
+st.info("""
+    Ao importar os dados, podemos conduzir diversas análises e plotar diferentes gráficos para nos ajudar a analisá-los. 
+        
+    Para simplificar, acrescente os nomes das colunas na primeira aba do excel, pois os usaremos para selecionar o dado a ser exibido!
+    
+    Os mesmos dados poderiam ser adicionados na análise do Modelo, afim de identificar se o mesmo tem relação com a evasão dos alunos, estatisticamente
+    """, icon='ℹ️')
+
 def load_data():
     return pd.read_csv('data/processed/passos-socio-economico.csv')
 
@@ -37,6 +45,8 @@ if st.button('Limpar dados', use_container_width=True,):
     st.rerun()
     
 with st.sidebar:
-    st.title('Configurações')
+    st.title('Configurações do Gráfico')
     if dados is not None:
-        st.selectbox('Selecione a coluna', dados.columns)
+        x = st.selectbox('Eixo X - Selecione a coluna', dados.columns)
+        y = st.selectbox('Eixo Y - Selecione a coluna', dados.columns)
+        title = st.text_input("Título do Gráfico", "Um Título Sensacional!")
