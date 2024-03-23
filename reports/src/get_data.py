@@ -3,6 +3,8 @@ import numpy as np
 import config
 import streamlit as st
 
+from sklearn.preprocessing import MinMaxScaler
+
 @st.cache_data
 def _df_passos_magicos():
     df = pd.read_csv('data/raw/PEDE_PASSOS_DATASET_FIAP.csv', sep=';')
@@ -66,7 +68,84 @@ def ultimo_ano(row):
 
 @st.cache_data
 def _get_modelling_data(df):
-    return df
+    # normalizar
+    # scaler = MinMaxScaler()
+
+    cols = ['INDE_2020', 'IAA_2020', 'IEG_2020', 'IPS_2020', 'IDA_2020', 'IPP_2020', 'IPV_2020', 'IAN_2020',
+            'INDE_2021', 'IAA_2021', 'IEG_2021', 'IPS_2021', 'IDA_2021', 'IPP_2021', 'IPV_2021', 'IAN_2021',
+            'INDE_2022', 'IAA_2022', 'IEG_2022', 'IPS_2022', 'IDA_2022', 'IPP_2022', 'IPV_2022', 'IAN_2022',]
+    
+    df = df[cols + ['EVADIU','ULTIMO_ANO','NOME']]
+    # df[cols] = scaler.fit_transform(df[cols])
+
+    df = df.melt(id_vars=['EVADIU','ULTIMO_ANO','NOME'])
+
+    df['var_year'] = [x.split('_')[1] for x in df['variable']]
+    df['variable'] = [x.split('_')[0] for x in df['variable']]
+    df['EVADIU'] = [(str(getattr(x, 'ULTIMO_ANO')) == str(getattr(x, 'var_year'))) if not(getattr(x, 'ULTIMO_ANO') is pd.NA) else False for x in df.itertuples()]
+    df = df.drop(columns=['ULTIMO_ANO'])
+    df['value'] = df.value.astype(float)
+
+    # pivotar para ficar indicador, ano, nome e se evadiu
+    df = df.pivot_table(columns=['variable'], index=['EVADIU','var_year','NOME']).reset_index()
+    cols = ['YEAR','IAA','IAN','IDA','IEG','INDE','IPP','IPS','IPV']
+    df.columns = ['EVADIU','YEAR','NOME','IAA','IAN','IDA','IEG','INDE','IPP','IPS','IPV']
+
+    # separar dados por ano
+    df_2020 = df.loc[df.YEAR=='2020']
+    df_2021 = df.loc[df.YEAR=='2021']
+    df_2022 = df.loc[df.YEAR=='2022']
+    base_columns = ['NOME', 'IAA', 'IAN', 'IDA', 'IEG', 'INDE', 'IPP',
+        'IPS', 'IPV']
+    
+    # modificar para ficar Y-1 e Y
+    df_2020_2021 = df_2020[base_columns]\
+            .rename(columns={ 'IAA':'IAA_Y-1'
+                            , 'IAN':'IAN_Y-1'
+                            , 'IDA':'IDA_Y-1'
+                            , 'IEG':'IEG_Y-1'
+                            , 'INDE':'INDE_Y-1'
+                            , 'IPP':'IPP_Y-1'
+                            , 'IPS':'IPS_Y-1'
+                            , 'IPV':'IPV_Y-1'
+                            })\
+            .merge(df_2021[base_columns + ['EVADIU']]\
+                .rename(columns={  'IAA':'IAA_Y'
+                                    , 'IAN':'IAN_Y'
+                                    , 'IDA':'IDA_Y'
+                                    , 'IEG':'IEG_Y'
+                                    , 'INDE':'INDE_Y'
+                                    , 'IPP':'IPP_Y'
+                                    , 'IPS':'IPS_Y'
+                                    , 'IPV':'IPV_Y'
+                                    })
+                    , on='NOME', how='right')
+
+    df_2021_2022 = df_2021[base_columns]\
+            .rename(columns={ 'IAA':'IAA_Y-1'
+                            , 'IAN':'IAN_Y-1'
+                            , 'IDA':'IDA_Y-1'
+                            , 'IEG':'IEG_Y-1'
+                            , 'INDE':'INDE_Y-1'
+                            , 'IPP':'IPP_Y-1'
+                            , 'IPS':'IPS_Y-1'
+                            , 'IPV':'IPV_Y-1'
+                            })\
+            .merge(df_2022[base_columns + ['EVADIU']]\
+                .rename(columns={  'IAA':'IAA_Y'
+                                    , 'IAN':'IAN_Y'
+                                    , 'IDA':'IDA_Y'
+                                    , 'IEG':'IEG_Y'
+                                    , 'INDE':'INDE_Y'
+                                    , 'IPP':'IPP_Y'
+                                    , 'IPS':'IPS_Y'
+                                    , 'IPV':'IPV_Y'
+                                    })
+                    , on='NOME', how='right')
+    df = pd.concat([df_2020_2021, df_2021_2022])
+
+    cols = list(set(df.columns) - set(['NOME', 'EVADIU']))
+    return df, cols
 
 @st.cache_data
 def _read_file(file):

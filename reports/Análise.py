@@ -11,7 +11,7 @@ st.write("""
     by. Eduardo Gomes, Igor Brito e Gabriel Pehls
 """)
 st.info(f"""
-    Com objetivo de predizer o valor do Petróleo Brent, mostramos nesse trabalho
+    Com objetivo de predizer a evasão e identificar o que influencia a mesma, mostramos nesse trabalho
     todo o processo para criação do nosso modelo, e algumas análises do histórico do mesmo.
     
     Os dados aqui utilizados foram recebidos da Passos Mágicos
@@ -19,22 +19,4 @@ st.info(f"""
 """)
         
 
-tab_socio_economicos, tab_correlacoes = st.tabs(['Dados Socioeconômicos','Correlações', ])
-
-with tab_socio_economicos:
-    st.markdown(f"""
-    """)
-
-    
-with tab_correlacoes:
-
-    st.markdown(f"""
-    """)
-    st.plotly_chart(
-        generate_graphs.plot_corr(df_base)
-    )
-
-    st.divider()
-
-    st.markdown(f"""
-    """)
+st.divider()

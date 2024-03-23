@@ -1,10 +1,12 @@
-import pandas as pd
-from sklearn.metrics import (mean_absolute_error, 
-                             mean_squared_error, 
-                             mean_absolute_percentage_error,
-                             r2_score)
 import config
-from xgboost import XGBRegressor
+import pandas as pd
+
+from sklearn.metrics import (
+    precision_score,
+    recall_score,
+    confusion_matrix,
+    roc_auc_score
+)
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
@@ -13,6 +15,13 @@ from sklearn.preprocessing import OneHotEncoder, MinMaxScaler, StandardScaler
 from sklearn.impute import SimpleImputer
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.model_selection import train_test_split
+
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import RepeatedStratifiedKFold
+
+from imblearn.under_sampling import RandomUnderSampler
+from imblearn.over_sampling import RandomOverSampler
+
 import shap
 import joblib
 import os
@@ -76,7 +85,7 @@ def _run_xgboost(df_final, path='models/xgb_model.pkl', predict=False):
 
 @st.cache_data
 def _get_tree_importances(_predict_pipeline):
-    model = _predict_pipeline['regressor']
+    model = _predict_pipeline['model']
     df_importances = pd.DataFrame([_predict_pipeline[:-1].get_feature_names_out(), model.feature_importances_], index=['Features','Importance']).T
     df_importances = df_importances.loc[df_importances.Importance > 0.0001].sort_values('Importance', ascending=False)
     return df_importances
@@ -136,21 +145,82 @@ def check_causality(data : pd.DataFrame, list_of_best_features : list, y_col : s
     # g_matrix.index = g_matrix['Variable']
     return g_matrix[['Variable','Sign.']]
 
+@st.cache_resource
+def _get_xgb_model(path='models/xgb_model.pkl'):
+    return joblib.load(path)
+
+@st.cache_resource
+def _run_xgboost(df_final, path='models/xgb_model.pkl', predict=False, retrain=False, sampling=True):
+    cols = list(set(df_final.columns) - set(['EVADIU','NOME']))
+    X,y = df_final[cols], df_final['EVADIU']
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.05, random_state=42)
+    if (sampling):
+        under = RandomUnderSampler()
+        X_train, y_train = under.fit_resample(X_train, y_train)
+    if not(retrain):
+        if (os.path.isfile(path)) and not(predict):
+            predict_pipeline = _get_xgb_model(path)
+            return {
+            'pipeline':predict_pipeline
+            , 'precision':str(round(precision_score(y_test, predict_pipeline.predict(X_test))*100,2))+"%"
+            , 'recall':str(round(recall_score(y_test, predict_pipeline.predict(X_test))*100,2))+"%"
+            , 'confusion_matrix':confusion_matrix(y_test, predict_pipeline.predict(X_test))
+            , 'roc_auc_score':roc_auc_score(y_test, predict_pipeline.predict(X_test))
+            , 'predictions':list(predict_pipeline.predict(X_test))
+            , 'y_true':list(y_test)
+            }
+        
+        if (os.path.isfile(path)) and (predict):
+            predict_pipeline = _get_xgb_model(path)
+            return {
+            'pipeline':predict_pipeline
+            , 'precision':str(round(precision_score(df_final['EVADIU'], predict_pipeline.predict(df_final[cols]))*100,2))+"%"
+            , 'recall':str(round(recall_score(df_final['EVADIU'], predict_pipeline.predict(df_final[cols]))*100,2))+"%"
+            , 'confusion_matrix':confusion_matrix(df_final['EVADIU'], predict_pipeline.predict(df_final[cols]))
+            , 'roc_auc_score':roc_auc_score(df_final['EVADIU'], predict_pipeline.predict(df_final[cols]))
+            , 'predictions':predict_pipeline.predict(df_final[cols])
+            , 'y_true':df_final['EVADIU']
+            }
+    numeric_features = list(set(X_train.columns) - set(['Year']))
+    numeric_transformer = Pipeline(
+        steps=[("imputer", SimpleImputer(strategy="mean")), ("scaler", MinMaxScaler())]
+    )
+
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ("num", numeric_transformer, numeric_features)
+        ]
+    )
+
+    predict_pipeline = Pipeline(
+        steps=[("preprocessor", preprocessor), ("model", GradientBoostingClassifier(random_state=42))]
+    )
+
+    # https://scikit-learn.org/stable/auto_examples/compose/plot_column_transformer_mixed_types.html
+
+    predict_pipeline.fit(X_train, y_train)
+    joblib.dump(predict_pipeline, path)
+    return {
+          'pipeline':predict_pipeline
+        , 'precision':str(round(precision_score(y_test, predict_pipeline.predict(X_test))*100,2))+"%"
+        , 'recall':str(round(recall_score(y_test, predict_pipeline.predict(X_test))*100,2))+"%"
+        , 'confusion_matrix':confusion_matrix(y_test, predict_pipeline.predict(X_test))
+        , 'roc_auc_score':roc_auc_score(y_test, predict_pipeline.predict(X_test))
+        , 'predictions':predict_pipeline.predict(X_test)
+        , 'y_true':y_test
+        }
+
 @st.cache_data
 def _get_shapley_values(df):
-    cols = list(set(df.columns) - set(['EVADIU']))
+    cols = list(set(df.columns) - set(['EVADIU', 'NOME']))
     shap.initjs()
-    _input_missings = SimpleImputer(strategy="median")
-    df.loc[:, cols] = pd.DataFrame(_input_missings.fit_transform(df.loc[:, cols]), columns=cols)
-    df = df.dropna(axis=0)
+    response = _run_xgboost(df, path='models/xgb_model_forfeatures.pkl')
 
     X_train, X_test, y_train, y_test = train_test_split(
        df[cols], df['EVADIU'], test_size=0.2, random_state=42, shuffle=False
     )
 
-    rf_estimator = GradientBoostingClassifier(random_state=42)
-
-    rf_estimator.fit(X_train, y_train)
+    rf_estimator = response['pipeline']['model']
 
     explainer = shap.TreeExplainer(rf_estimator)
     shap_values = explainer.shap_values(X_train)
