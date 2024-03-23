@@ -46,9 +46,9 @@ if load_file:
                     with col32:
                         operation = st.selectbox("Operação", ["Soma","Média",'Mediana'])
                         
-        # if st.button("Plotar Gráfico"):
-        st.plotly_chart(
-            generate_graphs.plot_style.get(
-                graph_type
-                )(df, x_col, y_col, operation, title)
-            )
+        if st.button("Plotar Gráfico"):
+            st.plotly_chart(
+                generate_graphs.plot_style.get(
+                    graph_type
+                    )(df, x_col, y_col, operation, title)
+                )
