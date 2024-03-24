@@ -64,16 +64,19 @@ with tab_resultados_iniciais:
             model_response['confusion_matrix']
         )
     )
+    model_response_train = (train_model._run_xgboost(df_model, predict=True, retrain=False))
     st.markdown(f"""
     ### Métricas
-    Com este modelo, adquirimos uma precisão de {model_response['precision']}, um recall de {model_response['recall']} e uma área embaixo da curva roc de {model_response['roc_auc_score']}
+    Com este modelo, adquirimos uma precisão de **{model_response['precision']}**, um recall de **{model_response['recall']}** e uma área embaixo da curva roc de **{model_response['roc_auc_score']}**
 
     #### Mas, o que elas querem dizer?
 
     Quanto ao Precision, ele nos mostra o quanto dos preditos como "churn" realmente são churn; o Recall, mostra quanto dos atuais "churns" foram preditos da forma correta.
 
     Considerando que seria mais interessante termos um aluno considerado como churn, mesmo não sendo, e ele receber uma atenção especial, a métrica de Recall seria a mais interessante, representando que estaríamos atuando da forma correta em **{model_response['recall']}** deles!
-""")
+
+    No geral, adquirimos uma precisão de **{model_response_train['precision']}**, um recall de **{model_response_train['recall']}** e uma área embaixo da curva roc de **{model_response_train['roc_auc_score']}**
+    """)
 
     
 

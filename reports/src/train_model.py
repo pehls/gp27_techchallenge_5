@@ -106,7 +106,7 @@ def _run_xgboost(df_final, path='models/xgb_model.pkl', predict=False, retrain=F
             , 'precision':str(round(precision_score(y_test, predict_pipeline.predict(X_test))*100,2))+"%"
             , 'recall':str(round(recall_score(y_test, predict_pipeline.predict(X_test))*100,2))+"%"
             , 'confusion_matrix':confusion_matrix(y_test, predict_pipeline.predict(X_test))
-            , 'roc_auc_score':roc_auc_score(y_test, predict_pipeline.predict(X_test))
+            , 'roc_auc_score':round(roc_auc_score(y_test, predict_pipeline.predict(X_test)),4)
             , 'predictions':list(predict_pipeline.predict(X_test))
             , 'y_true':list(y_test)
             }
@@ -118,11 +118,11 @@ def _run_xgboost(df_final, path='models/xgb_model.pkl', predict=False, retrain=F
             , 'precision':str(round(precision_score(df_final['EVADIU'], predict_pipeline.predict(df_final[cols]))*100,2))+"%"
             , 'recall':str(round(recall_score(df_final['EVADIU'], predict_pipeline.predict(df_final[cols]))*100,2))+"%"
             , 'confusion_matrix':confusion_matrix(df_final['EVADIU'], predict_pipeline.predict(df_final[cols]))
-            , 'roc_auc_score':roc_auc_score(df_final['EVADIU'], predict_pipeline.predict(df_final[cols]))
+            , 'roc_auc_score':round(roc_auc_score(df_final['EVADIU'], predict_pipeline.predict(df_final[cols])),4)
             , 'predictions':predict_pipeline.predict(df_final[cols])
             , 'y_true':df_final['EVADIU']
             }
-    numeric_features = list(set(X_train.columns) - set(['Year']))
+    numeric_features = list(set(X_train.columns) - set(['YEAR']))
     numeric_transformer = Pipeline(
         steps=[("imputer", SimpleImputer(strategy="mean")), ("scaler", MinMaxScaler())]
     )
@@ -146,7 +146,7 @@ def _run_xgboost(df_final, path='models/xgb_model.pkl', predict=False, retrain=F
         , 'precision':str(round(precision_score(y_test, predict_pipeline.predict(X_test))*100,2))+"%"
         , 'recall':str(round(recall_score(y_test, predict_pipeline.predict(X_test))*100,2))+"%"
         , 'confusion_matrix':confusion_matrix(y_test, predict_pipeline.predict(X_test))
-        , 'roc_auc_score':roc_auc_score(y_test, predict_pipeline.predict(X_test))
+        , 'roc_auc_score':round(roc_auc_score(y_test, predict_pipeline.predict(X_test)),4)
         , 'predictions':predict_pipeline.predict(X_test)
         , 'y_true':y_test
         }
