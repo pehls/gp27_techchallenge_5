@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.express as px
@@ -8,6 +9,7 @@ from plotly.subplots import make_subplots
 import shap
 import matplotlib
 import streamlit as st
+from sklearn.preprocessing import MinMaxScaler
 
 from src import train_model, get_data
 
@@ -164,4 +166,59 @@ def _plot_importance(df):
     df_features = pd.DataFrame(columns=['Importance'], index=feature_names, data=pipeline['model'].feature_importances_).reset_index(names=['Features']).sort_values('Importance')
     df_features['Importance'] = [round(x, 2) for x in df_features['Importance']]
     df_features = df_features.loc[df_features['Importance'] > 0]
-    return _h_bar_plot(df_features, y_col='Importance', x_col='Features', title='Feature Importance', height=900)
+    return _h_bar_plot(df_features, y_col='Importance', x_col='Features', 
+                       title=f'Feature Importance<br><sup>Total de {len(df_features)} features com importância na previsão</sup>', 
+                       height=900)
+
+def _plotly_plot_shap_values(response, width=800, height=600, show_only=15):
+    df_plot = train_model._get_shap(response)
+    df_order = df_plot
+    df_order['abs_shap'] = abs(df_order['SHAP value (impact on model output)'])
+    df_order = df_order.groupby('Feature').agg({'abs_shap':('sum','max')}).reset_index()
+    df_order.columns = ['Feature','total_shap','max_shap']
+    df_order = df_order.loc[df_order['total_shap']!=0].sort_values('max_shap', ascending=False)
+    feat_out = list(set(response['X'].columns) - set(df_order.Feature.to_list()))
+
+    fig = go.Figure()
+    i = show_only
+    y = list()
+    for feature_name in df_order.head(show_only).Feature:
+        internal_df = df_plot.loc[df_plot.Feature == feature_name]
+        y_ = i + np.random.rand(len(df_plot))
+        y.append(np.average(y_))
+        fig.add_trace(go.Scatter(
+            x=internal_df['SHAP value (impact on model output)'], 
+            y=y_,
+            mode='markers',
+            marker=dict(
+                size=9,
+                color=internal_df['Feature value'],
+                colorbar=dict(
+                    title='Feature value',
+                ),
+                colorscale='Plasma'
+            ),
+            name=feature_name,
+            text=feature_name,
+            
+        ))
+        i-=1
+
+    fig.update_layout(
+        xaxis=dict(showgrid=True, gridcolor='WhiteSmoke', zerolinecolor='Gainsboro'),
+        yaxis=dict(showgrid=True, gridcolor='WhiteSmoke', zerolinecolor='Gainsboro'),
+        plot_bgcolor='white',
+        title=f'''SHAP Values, Feature Values<br>
+<sup>{len(df_order) - show_only} features com impacto além das {show_only} exibidas</sup><br>
+<sup>{len(feat_out)} features sem impacto</sup>''',
+        
+    )
+    fig.update_layout(plot_bgcolor='white', boxgap=0,
+                    showlegend=False, coloraxis_showscale=True)
+    fig.update_yaxes(tickvals=y, ticktext=df_order.Feature.to_list())
+    fig.update_layout(
+        autosize=False,
+        width=width,
+        height=height,
+    )
+    return fig

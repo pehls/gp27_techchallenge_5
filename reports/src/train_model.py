@@ -109,6 +109,7 @@ def _run_xgboost(df_final, path='models/xgb_model.pkl', predict=False, retrain=F
             , 'roc_auc_score':round(roc_auc_score(y_test, predict_pipeline.predict(X_test)),4)
             , 'predictions':list(predict_pipeline.predict(X_test))
             , 'y_true':list(y_test)
+            , 'X':X_test
             }
         
         if (os.path.isfile(path)) and (predict):
@@ -121,6 +122,7 @@ def _run_xgboost(df_final, path='models/xgb_model.pkl', predict=False, retrain=F
             , 'roc_auc_score':round(roc_auc_score(df_final['EVADIU'], predict_pipeline.predict(df_final[cols])),4)
             , 'predictions':predict_pipeline.predict(df_final[cols])
             , 'y_true':df_final['EVADIU']
+            , 'X':df_final[cols]
             }
     numeric_features = list(set(X_train.columns) - set(['YEAR']))
     numeric_transformer = Pipeline(
@@ -149,6 +151,7 @@ def _run_xgboost(df_final, path='models/xgb_model.pkl', predict=False, retrain=F
         , 'roc_auc_score':round(roc_auc_score(y_test, predict_pipeline.predict(X_test)),4)
         , 'predictions':predict_pipeline.predict(X_test)
         , 'y_true':y_test
+        , 'X':X_test
         }
 
 @st.cache_data
@@ -166,3 +169,31 @@ def _get_shapley_values(df):
     explainer = shap.TreeExplainer(rf_estimator)
     shap_values = explainer.shap_values(X_train)
     return X_train, y_train, shap_values, explainer
+
+@st.cache_data
+def _get_shap(_response):
+    explainer = shap.TreeExplainer(_response['pipeline']['model'])
+    shap_values = explainer(_response['X'])
+    df_data = pd.DataFrame(
+        np.c_[shap_values.base_values, shap_values.data],
+        columns = ['Shap_Base'] + list(_response['X'].columns)
+    ).reset_index(names=['id'])
+
+    values = df_data.iloc[:,2:].abs().mean(axis=0).sort_values().index
+    df_data[values] = MinMaxScaler().fit_transform(df_data[values])
+    df_data.drop('Shap_Base', axis=1, inplace=True)
+
+    df_data = pd.melt(df_data, id_vars=['id'], value_vars=values, var_name='Feature', value_name='Feature value')
+
+    shap_df = pd.DataFrame(
+        np.c_[shap_values.base_values, shap_values.values],
+        columns = ['Shap_Base'] + list(_response['X'].columns)
+    ).reset_index(names=['id'])
+    shap_df.drop('Shap_Base', axis=1, inplace=True)
+    df_plot = pd.melt(shap_df, id_vars=['id'], value_vars=values, var_name='Feature', value_name='SHAP value (impact on model output)')
+
+    df_plot = df_plot.merge(
+        df_data, on=['id','Feature']
+    )
+
+    return df_plot

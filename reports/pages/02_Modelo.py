@@ -12,7 +12,7 @@ shap.initjs()
 
 st.title('Modelo')
 
-tab_correlacoes, tab_modelagem_inicial, tab_resultados_iniciais, tab_imp_variaveis, tab_shap_values, tab_simulacao = st.tabs(["Correlações",'Conceitos da Modelagem', "Resultados Iniciais",  "Importância das Variáveis", "Boruta Shap?", "Simulação"])
+tab_correlacoes, tab_modelagem_inicial, tab_resultados_iniciais = st.tabs(["Correlações",'Conceitos da Modelagem', "Resultados Iniciais"])
 
 df_base = get_data._df_passos_magicos()
 df_model, cols = get_data._get_modelling_data(df_base)
@@ -40,16 +40,7 @@ with tab_modelagem_inicial:
                 width=700, 
         )   
     st.markdown(""" 
-        ### Shapley Values
-                
-        ### Feature Importance
-
-        Ao utilizarmos diversas variáveis para prever a saída de um aluno, podemos mensurar qual a importância de cada uma delas para a previsão do mesmo.
-
-        No caso apresentado a seguir, apresentamos a importância através do "gain", ou seja, o erro no treinamento reduzido em cada divisão, em todas as árvores, estando mais relacionado a como as árvores operam individualmente.
-
-        Comumente, podemos definir as variáveis com maior importância como os mais impactantes para a movimentação da variável alvo, tornando a análise útil para identificar onde podemos atuar em uma melhoria possível para a variável alvo, norteando ações que possam causar o maior impacto possível em menos tempo;
-                
+       
     """)
     
 with tab_resultados_iniciais:
@@ -76,47 +67,4 @@ with tab_resultados_iniciais:
     Considerando que seria mais interessante termos um aluno considerado como churn, mesmo não sendo, e ele receber uma atenção especial, a métrica de Recall seria a mais interessante, representando que estaríamos atuando da forma correta em **{model_response['recall']}** deles!
 
     No geral, adquirimos uma precisão de **{model_response_train['precision']}**, um recall de **{model_response_train['recall']}** e uma área embaixo da curva roc de **{model_response_train['roc_auc_score']}**
-    """)
-
-    
-
-with tab_imp_variaveis:
-
-  
-    st.plotly_chart(
-        generate_graphs._plot_importance(df_model),
-        height=400
-    )
-
-with tab_shap_values:
-    st.pyplot(
-        generate_graphs.plot_shap_summary_plot(df_model)
-    )
-
-    st.markdown(f"""
-                
-    """)
-    st.divider()
-    st.markdown(f"""
-        A partir dessa modelagem inicial, e da necessidade de analisarmos de forma mais direta o que está influenciando na previsão da saída de um aluno, iremos utilizar alguns 
-        itens adicionais para melhorar o desempenho de nossa previsão:
-                
-        #### Variáveis externas
-                
-        Com a descoberta de variáveis de diferentes fontes que tem uma relação forte com nossa variável alvo, vamos aproveitá-las para obter um modelo potencialmente melhor, mas principalmente mais explicativo;
-                
-       
-
-    """)
-    
-
-    st.markdown(f"""     
-               
-       
-    """)
-    
-    st.markdown(f"""             
-        #### Utilização dos modelos
-                
-        Com todos os dados em mãos, podemos criar um modelo para identificar possíveis alunos que irão acabar saindo da organização, antevendo e agindo de forma pró-ativa para retê-los, e organizando estrategicamente a estrutura da Passos Mágicos.
     """)
