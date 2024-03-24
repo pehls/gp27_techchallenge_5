@@ -69,7 +69,7 @@ with tab_shap_values:
         
                 
     
-    
+with tab_simulacao:
     st.markdown(f"""             
         #### Utilização dos modelos
                 
