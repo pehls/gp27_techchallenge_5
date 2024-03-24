@@ -28,71 +28,12 @@ import os
 import streamlit as st
 import numpy as np
 
-@st.cache_resource
-def _run_xgboost(df_final, path='models/xgb_model.pkl', predict=False):
-    X, y = df_final.drop(columns=['Preco']), df_final['Preco']
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-    if (os.path.isfile(path)) and not(predict):
-        predict_pipeline = _get_xgb_model(path)
-        return {
-          'pipeline':predict_pipeline
-        , 'mape':str(round(mean_absolute_percentage_error(y_test, predict_pipeline.predict(X_test))*100,2))+"%"
-        , 'r2':round(r2_score(y_train, predict_pipeline.predict(X_train)), 4)
-        , 'predictions':predict_pipeline.predict(df_final)
-        }
-    
-    if (os.path.isfile(path)) and (predict):
-        predict_pipeline = _get_xgb_model(path)
-        return {
-          'pipeline':predict_pipeline
-        , 'mape':str(round(mean_absolute_percentage_error(df_final['Preco'], predict_pipeline.predict(df_final.drop(columns=['Preco'])))*100,2))+"%"
-        , 'r2':round(r2_score(df_final['Preco'], predict_pipeline.predict(df_final.drop(columns=['Preco']))), 4)
-        , 'predictions':predict_pipeline.predict(df_final.drop(columns=['Preco']))
-        }
-
-    numeric_features = list(set(X.columns) - set(['Year']))
-    numeric_transformer = Pipeline(
-        steps=[("imputer", SimpleImputer(strategy="mean")), ("scaler", StandardScaler())]
-    )
-
-    categorical_features = ["Year"]
-    categorical_transformer = Pipeline(
-        steps=[
-            ("encoder", OneHotEncoder(handle_unknown="ignore"))
-            # , ("selector", SelectPercentile(chi2, percentile=50)),
-        ]
-    )
-    preprocessor = ColumnTransformer(
-        transformers=[
-            ("num", numeric_transformer, numeric_features),
-            ("cat", categorical_transformer, categorical_features),
-        ]
-    )
-
-    predict_pipeline = Pipeline(
-        steps=[("preprocessor", preprocessor), ("regressor", XGBRegressor(seed=42))]
-    )
-
-    # https://scikit-learn.org/stable/auto_examples/compose/plot_column_transformer_mixed_types.html
-
-    predict_pipeline.fit(X_train, y_train)
-    return {
-          'pipeline':predict_pipeline
-        , 'mape':str(round(mean_absolute_percentage_error(y_test, predict_pipeline.predict(X_test))*100,2))+"%"
-        , 'r2':round(r2_score(y_train, predict_pipeline.predict(X_train)), 4)
-        }
-
 @st.cache_data
 def _get_tree_importances(_predict_pipeline):
     model = _predict_pipeline['model']
     df_importances = pd.DataFrame([_predict_pipeline[:-1].get_feature_names_out(), model.feature_importances_], index=['Features','Importance']).T
     df_importances = df_importances.loc[df_importances.Importance > 0.0001].sort_values('Importance', ascending=False)
     return df_importances
-
-@st.cache_resource
-def _get_xgb_model(path='models/xgb_model.pkl'):
-    return joblib.load(path)
 
 @st.cache_data
 def check_causality(data : pd.DataFrame, list_of_best_features : list, y_col : str, threshold : float = 0.05) -> pd.DataFrame:
@@ -151,7 +92,7 @@ def _get_xgb_model(path='models/xgb_model.pkl'):
 
 @st.cache_resource
 def _run_xgboost(df_final, path='models/xgb_model.pkl', predict=False, retrain=False, sampling=True):
-    cols = list(set(df_final.columns) - set(['EVADIU','NOME']))
+    cols = list(set(df_final.columns) - set(['EVADIU','NOME','YEAR']))
     X,y = df_final[cols], df_final['EVADIU']
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.05, random_state=42)
     if (sampling):

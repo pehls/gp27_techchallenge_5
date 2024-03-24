@@ -115,14 +115,17 @@ def _bar_plot(df, x_col, y_col, operation = None, title=''):
 
     return fig
 
-def _h_bar_plot(df, x_col, y_col, operation = None, title=''):
+def _h_bar_plot(df, x_col, y_col, operation = None, title='', height=None):
+    _height=600
     if (operation):
         df[y_col] = df[y_col].astype(float, errors='ignore')
         df = df.groupby(x_col).agg({y_col : operations[operation]}).reset_index().reset_index().sort_values(y_col)
+    if (height):
+        _height=height
     fig = px.bar(
         df
         , x=y_col, y=x_col, orientation='h'
-        , title=title, text=y_col, height=600
+        , title=title, text=y_col, height=_height
     )
     fig.update_layout(
         yaxis=dict(
@@ -160,4 +163,5 @@ def _plot_importance(df):
     feature_names = [x.split('__')[1] for x in pipeline[:-1].get_feature_names_out()]
     df_features = pd.DataFrame(columns=['Importance'], index=feature_names, data=pipeline['model'].feature_importances_).reset_index(names=['Features']).sort_values('Importance')
     df_features['Importance'] = [round(x, 2) for x in df_features['Importance']]
-    return _h_bar_plot(df_features, y_col='Importance', x_col='Features', title='Feature Importance')
+    df_features = df_features.loc[df_features['Importance'] > 0]
+    return _h_bar_plot(df_features, y_col='Importance', x_col='Features', title='Feature Importance', height=900)
