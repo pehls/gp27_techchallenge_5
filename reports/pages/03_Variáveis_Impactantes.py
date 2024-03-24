@@ -44,7 +44,7 @@ with tab_shap_values:
     """)
 
     show_only=15
-    height=show_only*40
+    height=show_only*50
 
     st.write(
         generate_graphs._plotly_plot_shap_values(
@@ -53,14 +53,22 @@ with tab_shap_values:
             , show_only = show_only)
     )
 
+    st.markdown(f"""     
+    #### E como analisamos?
+    Neste gráfico, quanto maior o Feature Value (O valor real do dado), 
+    mais próximo de 1 (e da cor amarela) o ponto, que corresponde a algum aluno e suas características. 
+    Ao olharmos o eixo X, na parte de baixo, encontramos o chamado "Valor SHAP" (SHAP Value), que mostra o impacto na saída do modelo. 
+    Quanto maior, ou mais próximo do valor máximo, maior o impacto na previsão da evasão do aluno. Para facilitar, organizamos as variáveis pelo impacto máximo absoluto, de forma a organizar da variável com mais impacto na saída do modelo para as de menos impacto.
+    
+    Dessa forma, ao atuar de uma forma mais contundente nos itens que estão no topo do gráfico, e com concentração mais forte na direita do eixo X, e ainda com o valor mais próximo de 0, podemos levantar de forma mais consistente o número de alunos a manter dentro da ONG, atuando em itens que tem um forte impacto na evasão dos alunos, devido ao valor baixo encontrado na variável atribuida e nomeada!
+       
+    """)
+
     st.divider()
    
         
                 
-    st.markdown(f"""     
-               
-       
-    """)
+    
     
     st.markdown(f"""             
         #### Utilização dos modelos

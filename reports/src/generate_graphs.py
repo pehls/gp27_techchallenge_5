@@ -198,15 +198,16 @@ def _plotly_plot_shap_values(response, width=800, height=600, show_only=15):
                 ),
                 colorscale='Plasma'
             ),
+            text=internal_df['Feature'],
             name=feature_name,
-            text=feature_name,
-            
+            customdata=round(internal_df['Feature value']*100,2),
+            hovertemplate="<b>%{text}<br>Feature value: %{customdata}%<br>Impact on model out: %{x}<br>"
         ))
         i-=1
 
     fig.update_layout(
-        xaxis=dict(showgrid=True, gridcolor='WhiteSmoke', zerolinecolor='Gainsboro'),
-        yaxis=dict(showgrid=True, gridcolor='WhiteSmoke', zerolinecolor='Gainsboro'),
+        xaxis=dict(showgrid=True, gridcolor='WhiteSmoke', zerolinecolor='Gainsboro', title='SHAP value (impact on model output)'),
+        yaxis=dict(showgrid=True, gridcolor='WhiteSmoke', zerolinecolor='Gainsboro', title="Feature Value"),
         plot_bgcolor='white',
         title=f'''SHAP Values, Feature Values<br>
 <sup>{len(df_order) - show_only} features com impacto além das {show_only} exibidas</sup><br>
@@ -221,4 +222,5 @@ def _plotly_plot_shap_values(response, width=800, height=600, show_only=15):
         width=width,
         height=height,
     )
+    # fig.update_layout(hovermode="y unified")
     return fig
