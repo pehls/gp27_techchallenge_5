@@ -48,30 +48,30 @@ with st.sidebar:
             st.session_state['file_key'] += 1
             st.rerun()
 
-    with st.container(border=True,):
-        graph_type = st.selectbox("Tipo de Gráfico", generate_graphs.plot_style)
+    # with st.container(border=True,):
+    #     graph_type = st.selectbox("Tipo de Gráfico", generate_graphs.plot_style)
 
 dados = st.session_state['dados']
-if st.session_state['dados'] is not None:
+if dados is not None:
+    dados = dados.drop(columns=['Código do domicilio'])
     with st.container(border=True,):
         col1, col2, col3, col4 = st.columns(4)
         with col1:
             x = st.selectbox('Eixo X - Selecione a coluna', dados.columns)
-        with col2:
-            y = st.selectbox('Eixo Y - Selecione a coluna', dados.columns)
-        with col3:
-            title = st.text_input("Título do gráfico", "Título do gráfico")
-        with col4:
-            col31, col32  = st.columns(2)
-            with col31:
-                operation = None
-                if st.checkbox("Agrupar dados?"):
-                    with col32:
-                        operation = st.selectbox("Operação", ["Soma","Média",'Mediana'])
+            st.write(dados[x].dtype)
+        # with col2:
+        #     y = st.selectbox('Eixo Y - Selecione a coluna', dados.columns)
+        # with col3:
+        #     title = st.text_input("Título do gráfico", "Título do gráfico")
+        # with col4:
+        #     col31, col32  = st.columns(2)
+        #     with col31:
+        #         operation = None
+        #         if st.checkbox("Agrupar dados?"):
+        #             with col32:
+        #                 operation = st.selectbox("Operação", ["Soma","Média",'Mediana'])
                     
     if st.button("Plotar Gráfico"):
         st.plotly_chart(
-            generate_graphs.plot_style.get(
-                graph_type
-                )(dados, x, y, operation, title)
+            generate_graphs._histogram_plot(dados, x, title=f'Histograma - {x}')
             )

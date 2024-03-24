@@ -143,10 +143,14 @@ def _h_bar_plot(df, x_col, y_col, operation = None, title='', height=None):
     )
     return fig
 
+def _histogram_plot(df, x_col, title='Histograma'):
+    return px.histogram(df, x=x_col, title=title)
+    
 plot_style = {
       'Linhas' : _line_plot
     , 'Barras' : _bar_plot
     , "Barras Horizontais" : _h_bar_plot
+    , 'Histograma': _histogram_plot
 }
 
 def _plot_confusion_matrix(cm):
