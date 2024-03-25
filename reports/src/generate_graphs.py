@@ -143,9 +143,22 @@ def _h_bar_plot(df, x_col, y_col, operation = None, title='', height=None):
     )
     return fig
 
-def _histogram_plot(df, x_col, title='Histograma'):
-    return px.histogram(df, x=x_col, title=title)
-    
+def _histogram_plot(df, x_col, title='Histograma', text_auto=True):
+    fig = px.histogram(df, x=x_col, title=title, text_auto=text_auto)
+    fig.update_layout(
+        yaxis=dict(
+            showgrid=True,
+            showline=False,
+            showticklabels=True
+        ),
+        xaxis=dict(
+            showgrid=True,
+            showline=False,
+            showticklabels=True
+        )
+    )
+    return fig
+
 plot_style = {
       'Linhas' : _line_plot
     , 'Barras' : _bar_plot
