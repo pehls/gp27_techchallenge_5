@@ -29,6 +29,7 @@ with st.expander("Instruções"):
         'Selecione o arquivo (xlsx) com os dados dos alunos em Y-1 e Y (ano atual)', 
         type=['xlsx']
         )
+    
 load_file = st.checkbox("Carregar arquivo")
 
 if file is not None:
@@ -47,7 +48,7 @@ if (file is not None) and load_file:
             df_new_data=df_new_data
             )
     # st.write(resp)
-    st.components.v1.iframe('http://127.0.0.1:8050/explainer_dashboard/', width=900, height=900, scrolling=True)
+    st.components.v1.iframe('http://127.0.0.1:8050/explainer_dashboard/', width=1200, height=900, scrolling=True)
 # if (file is not None) and load_file:
 #     while not(os.path.isfile("file.html")):
 #         time.sleep(5)
