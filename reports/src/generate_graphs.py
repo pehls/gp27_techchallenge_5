@@ -341,24 +341,6 @@ def _expose_explainer_custom_dashboard(_response, df_new_data):
                 ])
                 
             ])
-        def to_html(self, state_dict=None, add_header=True, _name = None):
-            html = to_html.title(self.title)
-            html += to_html.card_row(
-                self.index.to_html(state_dict, add_header=True,)
-            )
-            html += to_html.card_row(
-                self.ind_preds.to_html(state_dict, add_header=False),
-                self.class_preds.to_html(state_dict, add_header=False),
-            )
-            html += to_html.card_row(
-                self.dependence.to_html(state_dict, add_header=False),
-                self.pdp.to_html(state_dict, add_header=False),
-            )
-            if add_header:
-                return to_html.add_header(html)
-            return html
-        
-    from flask import Flask
     import dash
     app = dash.Dash(__name__)
     server = app.server
