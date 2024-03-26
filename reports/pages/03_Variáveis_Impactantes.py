@@ -3,7 +3,7 @@ from src import get_data, train_model, generate_graphs
 
 st.title('Variáveis Impactantes')
 
-tab_imp_variaveis, tab_shap_values, tab_simulacao = st.tabs(["Importância das Variáveis", "Como as Variáveis impactam a previsão?", "Simulação"])
+tab_imp_variaveis, tab_shap_values = st.tabs(["Importância das Variáveis", "Como as Variáveis impactam a previsão?"])
 
 df_base = get_data._df_passos_magicos()
 df_model, cols = get_data._get_modelling_data(df_base)
@@ -65,13 +65,3 @@ with tab_shap_values:
     """)
 
     st.divider()
-   
-        
-                
-    
-with tab_simulacao:
-    st.markdown(f"""             
-        #### Utilização dos modelos
-                
-        Com todos os dados em mãos, podemos criar um modelo para identificar possíveis alunos que irão acabar saindo da organização, antevendo e agindo de forma pró-ativa para retê-los, e organizando estrategicamente a estrutura da Passos Mágicos.
-    """)

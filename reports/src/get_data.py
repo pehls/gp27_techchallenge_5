@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import io
 import config
 import streamlit as st
 
@@ -245,3 +246,103 @@ def _rename(df, cols_not_rename=['YEAR'], posfixo='_Y-1'):
 @st.cache_data
 def _read_file(file):
     return pd.read_excel(file)
+
+def _return_download_data(df):
+    buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+        df.to_excel(writer, sheet_name="Sheet1", index=False)
+
+    return st.download_button(
+        label="Exportar xlsx",
+        data=buffer,
+        file_name="data_example_simulations.xlsx",
+        mime="application/vnd.ms-excel"
+    )
+
+def _test_df_cols(df):
+    cols_in_last_year =  ['IDADE_Y-1', 'IAA_Y-1', 'IAN_Y-1', 'IDA_Y-1', 'IEG_Y-1', 'INDE_Y-1', 'IPP_Y-1', 'IPS_Y-1', 'IPV_Y-1']
+    cols_in_current_year =  ['IDADE_Y', 'IAA_Y', 'IAN_Y', 'IDA_Y', 'IEG_Y', 'INDE_Y', 'IPP_Y', 'IPS_Y', 'IPV_Y']
+    cols_identity = ['YEAR','NOME']
+    cols_diff = set(cols_in_current_year + cols_in_last_year + cols_identity).difference(df.columns)
+    return {
+          'cols_diff':cols_diff
+        , 'status_ok':True if len(cols_diff)<1 else False
+        , 'df':df
+    }
+
+def _load_new_data(file_path):
+    df = pd.read_excel(file_path)
+    cols_in =  ['IDADE', 'IAA', 'IAN', 'IDA', 'IEG', 'INDE', 'IPP', 'IPS', 'IPV']
+    if not(_test_df_cols(df)['status_ok']):
+        return _test_df_cols(df)
+    
+    # add dados da saresp em Y-1
+    df_saresp = _get_saresp()
+    df_saresp_m1 = _rename(df_saresp, posfixo='_Y-1')
+    for col in ['YEAR','IDADE_Y-1']:
+        df_saresp_m1[col] = df_saresp_m1[col].astype(int)
+        df[col] = df[col].astype(int)
+    df = df.merge(
+        df_saresp_m1
+        , on=['YEAR','IDADE_Y-1']
+        )
+    
+    # saresp no ano corrente
+    df_saresp_m = _rename(df_saresp, posfixo='_Y')
+    for col in ['YEAR','IDADE_Y']:
+        df_saresp_m[col] = df_saresp_m[col].astype(int)
+        df[col] = df[col].astype(int)
+    df = df.merge(
+        df_saresp_m
+        , on=['YEAR','IDADE_Y']
+        )
+    return {
+          'cols_diff':[]
+        , 'status_ok':True
+        , 'df':df
+    }
+
+def _test_df_cols(df):
+    cols_in_last_year =  ['IDADE_Y-1', 'IAA_Y-1', 'IAN_Y-1', 'IDA_Y-1', 'IEG_Y-1', 'INDE_Y-1', 'IPP_Y-1', 'IPS_Y-1', 'IPV_Y-1']
+    cols_in_current_year =  ['IDADE_Y', 'IAA_Y', 'IAN_Y', 'IDA_Y', 'IEG_Y', 'INDE_Y', 'IPP_Y', 'IPS_Y', 'IPV_Y']
+    cols_identity = ['YEAR','NOME']
+    cols_diff = set(cols_in_current_year + cols_in_last_year + cols_identity).difference(df.columns)
+    return {
+          'cols_diff':cols_diff
+        , 'status_ok':True if len(cols_diff)<1 else False
+        , 'df':df
+    }
+
+def _load_new_data(file_path):
+    df = pd.read_excel(file_path)
+    cols_in =  ['IDADE', 'IAA', 'IAN', 'IDA', 'IEG', 'INDE', 'IPP', 'IPS', 'IPV']
+    if not(_test_df_cols(df)['status_ok']):
+        return _test_df_cols(df)
+    
+    # add dados da saresp em Y-1
+    df_saresp = _get_saresp()
+    df_saresp_m1 = _rename(df_saresp, posfixo='_Y-1')
+    for col in ['YEAR','IDADE_Y-1']:
+        df_saresp_m1[col] = df_saresp_m1[col].astype(int)
+        df[col] = df[col].astype(int)
+    df = df.merge(
+        df_saresp_m1
+        , on=['YEAR','IDADE_Y-1']
+        )
+    
+    # saresp no ano corrente
+    df_saresp_m = _rename(df_saresp, posfixo='_Y')
+    for col in ['YEAR','IDADE_Y']:
+        df_saresp_m[col] = df_saresp_m[col].astype(int)
+        df[col] = df[col].astype(int)
+    df = df.merge(
+        df_saresp_m
+        , on=['YEAR','IDADE_Y']
+        )
+    df.index = df['NOME']
+    df = df.drop(columns={'NOME'})
+    return {
+          'cols_diff':[]
+        , 'status_ok':True
+        , 'df':df
+    }

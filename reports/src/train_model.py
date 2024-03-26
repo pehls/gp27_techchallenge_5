@@ -23,6 +23,8 @@ from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler
 
 import shap
+from explainerdashboard import ClassifierExplainer, ExplainerDashboard
+
 import joblib
 import os
 import streamlit as st
@@ -197,3 +199,4 @@ def _get_shap(_response):
     )
 
     return df_plot
+

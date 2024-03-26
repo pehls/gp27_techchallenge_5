@@ -11,6 +11,22 @@ import matplotlib
 import streamlit as st
 from sklearn.preprocessing import MinMaxScaler
 
+from explainerdashboard.custom import (
+    ExplainerComponent, dbc, html,
+    ShapDependenceComponent,
+    ShapContributionsGraphComponent,
+    ShapInteractionsComposite,
+    ClassifierPredictionSummaryComponent,
+    PdpComponent,
+    ClassifierRandomIndexComponent,
+    PosLabelSelector,
+    IndexConnector, 
+    to_html
+)
+from explainerdashboard import ClassifierExplainer, RegressionExplainer
+from explainerdashboard import ExplainerDashboard
+
+
 from src import train_model, get_data
 
 def plot_corr(df, show_only=None):
@@ -182,10 +198,9 @@ def _plot_importance(df):
     feature_names = [x.split('__')[1] for x in pipeline[:-1].get_feature_names_out()]
     df_features = pd.DataFrame(columns=['Importance'], index=feature_names, data=pipeline['model'].feature_importances_).reset_index(names=['Features']).sort_values('Importance')
     df_features['Importance'] = [round(x, 2) for x in df_features['Importance']]
-    df_features = df_features.loc[df_features['Importance'] > 0]
-    return _h_bar_plot(df_features, y_col='Importance', x_col='Features', 
-                       title=f'Feature Importance<br><sup>Total de {len(df_features)} features com importância na previsão</sup>', 
-                       height=900)
+    df_features = df_features.loc[df_features['Importance'] > 0].sort_values(['Importance'])
+    return _h_bar_plot(df_features.tail(10), y_col='Importance', x_col='Features', 
+                       title=f'Feature Importance<br><sup>Total de {len(df_features)} features com importância na previsão</sup>')
 
 def _plotly_plot_shap_values(response, width=800, height=600, show_only=15):
     df_plot = train_model._get_shap(response)
@@ -241,3 +256,126 @@ def _plotly_plot_shap_values(response, width=800, height=600, show_only=15):
     )
     # fig.update_layout(hovermode="y unified")
     return fig
+
+
+def _expose_explainer_custom_dashboard(_response, df_new_data):
+    class CustomDashboard(ExplainerComponent):
+        def __init__(self, explainer, title="Previsões e Variáveis Decisórias", **kwargs):
+            super().__init__(explainer, title="Previsões e Variáveis Decisórias")
+            self.pos_label = True
+            self.index = ClassifierRandomIndexComponent(explainer,
+                                                        hide_title=True, hide_index=False,
+                                                        hide_slider=True, hide_labels=True,
+                                                        hide_pred_or_perc=True,
+                                                        hide_selector=True, hide_button=False)
+            self.dependence = ShapDependenceComponent(explainer,
+                                hide_selector=True, hide_percentage=True, hide_index=True,  
+                                description="""
+                                    Este gráfico mostra a relação entre as variáveis e seu valor shap, 
+                                    fazendo com que consigamos investigar o relacionamento entre o valor das features e 
+                                    o impacto na previsão. Você pode checar se o modelo usa as features de acordo com o
+                                    esperado, ou usar o mesmo para aprender as relações que o modelo aprendeu entre
+                                    as features de entrada e a saída predita
+                                """ ,
+                                title="Dependência Shap", subtitle="Relação entre o valor da variável e o valor SHAP. Em cinza, o NOME selecionado!",             
+                                cutoff=0.75, **kwargs)
+            self.pdp = PdpComponent(explainer,
+                                hide_selector=True, hide_cats=True, hide_index=True,
+                                hide_depth=True, hide_sort=True,
+                                description="""
+                                O gráfico de dependência parcial (pdp) mostra como seria a previsão do modelo
+                                se você alterar um recurso específico. O gráfico mostra uma amostra
+                                de observações e como essas observações mudariam com as mudanças aplicadas
+                                (linhas de grade). O efeito médio é mostrado em cinza. O efeito
+                                de alterar o recurso para um único Nome é
+                                mostrado em azul. Você pode ajustar quantas observações serão utilizadas para o
+                                calculo, quantas linhas de grade mostrar e quantos pontos ao longo do
+                                eixo x para calcular as previsões do modelo.
+                                """,
+                                title="Gráfico de Dependência Parcial",
+                                subtitle="Como a previsão mudará se você mudar uma variável?",
+                                **kwargs)
+            self.ind_preds = ShapContributionsGraphComponent(explainer,
+                                hide_selector=True, hide_cats=True, hide_index=True,
+                                hide_depth=True, hide_sort=True,
+                                description="""
+                                Este gráfico mostra a contribuição que cada característica individual tem 
+                                na previsão de uma observação específica. 
+                                As contribuições (a partir da média da população) somam-se à previsão final.
+                                Isso permite explicar exatamente como cada previsão individual foi construída 
+                                a partir de todos os ingredientes individuais do modelo.
+                                """,
+                                title="Gráfico das Contribuições", subtitle="Como cada Variável contribuiu para a previsão?",
+                                **kwargs)
+            self.class_preds = ClassifierPredictionSummaryComponent(explainer,
+                                hide_selector=True, hide_cats=True, hide_index=True,
+                                hide_depth=True, hide_sort=True,
+                                description="Mostra a probabilidade predita para cada situação, sendo False para não-evasão e True para Evasão.",
+                                title="Previsões & Probabilidades",
+                                **kwargs)
+            self.connector = IndexConnector(self.index, [self.dependence, self.pdp, self.ind_preds, self.class_preds])
+
+        def layout(self):
+            return dbc.Container([
+                dbc.Row([
+                    dbc.Col([
+                        html.H3("Selecione um Aluno:"),
+                        self.index.layout()
+                    ])
+                ]),
+                dbc.Row([
+                    dbc.Col([
+                        self.ind_preds.layout(),
+                    ]),
+                    dbc.Col([
+                        self.class_preds.layout(),
+                    ]),
+                ]),
+                dbc.Row([
+                    dbc.Col([
+                        self.dependence.layout(),
+                    ]),
+                    dbc.Col([
+                        self.pdp.layout(),
+                    ]),
+                ])
+                
+            ])
+        def to_html(self, state_dict=None, add_header=True, _name = None):
+            html = to_html.title(self.title)
+            html += to_html.card_row(
+                self.index.to_html(state_dict, add_header=True,)
+            )
+            html += to_html.card_row(
+                self.ind_preds.to_html(state_dict, add_header=False),
+                self.class_preds.to_html(state_dict, add_header=False),
+            )
+            html += to_html.card_row(
+                self.dependence.to_html(state_dict, add_header=False),
+                self.pdp.to_html(state_dict, add_header=False),
+            )
+            if add_header:
+                return to_html.add_header(html)
+            return html
+        
+    from flask import Flask
+    import dash
+    app = dash.Dash(__name__)
+    server = app.server
+    app.scripts.config.serve_locally=False
+    app.css.config.serve_locally=False
+
+    explainer = ClassifierExplainer(_response['pipeline'], df_new_data, _response['pipeline'].predict(df_new_data))
+    exp_dash = ExplainerDashboard(explainer, 
+                                CustomDashboard, 
+                                server=server, url_base_pathname="/explainer_dashboard/",
+                                header_hide_selector=True, 
+                                description = "Esta área do dashboard mostra o funcionamento do modelo, explicando como ele realizou as suas predições")
+    # exp_dash.run(8050, mode='inline')
+
+    @server.route('/explainer_dashboard/')
+    def return_dashboard():
+        return exp_dash.app.index()
+    
+    return return_dashboard()
+    return "http://127.0.0.1:8050/"

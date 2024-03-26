@@ -1,7 +1,6 @@
 import streamlit as st
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
-import src.generate_graphs as generate_graphs
-import src.get_data as get_data
+from src import get_data
 
 df_base = get_data._df_passos_magicos()
 
