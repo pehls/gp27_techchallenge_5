@@ -73,8 +73,9 @@ if (file is None) and load_file:
 
     # st.write(resp)
 time.sleep(5)
-st.components.v1.iframe('https://gp27techchallenge5.streamlit.app:8000/explainer_dashboard/',
-                            width=1200, height=900, scrolling=True)
+if sock.connect_ex(('https://gp27techchallenge5.streamlit.app',8000)) != 0:
+    st.components.v1.iframe('https://gp27techchallenge5.streamlit.app:8000/explainer_dashboard/',
+                                width=1200, height=900, scrolling=True)
 
 # if (file is not None) and load_file:
 #     while not(os.path.isfile("file.html")):
