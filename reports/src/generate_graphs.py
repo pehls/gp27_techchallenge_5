@@ -369,18 +369,15 @@ def _expose_explainer_custom_dashboard(_response, df_new_data):
 
 def shutdown_server():
     from flask import request
-    global server
     func = request.environ.get('werkzeug.server.shutdown')
     if func is None:
         raise RuntimeError('Not running with the Werkzeug Server')
     func()
-    server.shutdown()
 
 def _serve_flask(exp_dash, app_dash):
     from werkzeug.serving import make_server
     import flask, threading, dash
 
-    
     class ServerThread(threading.Thread):
         def __init__(self, app):
             threading.Thread.__init__(self)
@@ -406,7 +403,6 @@ def _serve_flask(exp_dash, app_dash):
         @app.route('/quit/')
         def quit():
             shutdown_server()
-        
         return app
     
     app = dash.Dash(server=start_server())
