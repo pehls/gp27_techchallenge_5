@@ -33,10 +33,8 @@ col1, col2 = st.columns(2)
 with col1:
     load_file = st.checkbox("Carregar arquivo")
 with col2:
-    reset_simulations = st.checkbox("Resetar Simulações (Caso os detalhes não apareçam abaixo)")
-
-if (reset_simulations):
-    st.components.v1.iframe('http://localhost:8050/quit/', width=0, height=0)
+    if st.button("Resetar Simulações (Caso os detalhes não apareçam abaixo)"):
+        st.components.v1.iframe('http://localhost:8050/quit/', width=0, height=0)
 
 if file is not None:
     response_new_data = get_data._load_new_data(file)

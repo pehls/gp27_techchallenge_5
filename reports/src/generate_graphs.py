@@ -355,6 +355,13 @@ def _expose_explainer_custom_dashboard(_response, df_new_data):
                                 description = "Esta área do dashboard mostra o funcionamento do modelo, explicando como ele realizou as suas predições")
     # exp_dash.run(8050, mode='inline')
 
+    from flask import request
+    def shutdown_server():
+        func = request.environ.get('werkzeug.server.shutdown')
+        if func is None:
+            raise RuntimeError('Not running with the Werkzeug Server')
+        func()
+
     @server.route('/explainer_dashboard/')
     def return_dashboard():
         return exp_dash.app.index()
@@ -362,7 +369,9 @@ def _expose_explainer_custom_dashboard(_response, df_new_data):
     @server.route('/quit')
     def _quit():
         import os
+        shutdown_server()
         os._exit(0)
+
     app.server.run(port=8050, host='0.0.0.0')
     return return_dashboard()
     return "http://127.0.0.1:8050/"
