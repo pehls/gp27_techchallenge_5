@@ -386,6 +386,8 @@ def _serve_flask(exp_dash, app_dash):
     def start_server():
         global server
         app = flask.Flask('myapp')
+        server = ServerThread(app)
+        
         @server.route('/explainer_dashboard/')
         def return_dashboard():
             return exp_dash.app.index()
@@ -396,7 +398,7 @@ def _serve_flask(exp_dash, app_dash):
             shutdown_server()
             stop_server()
             os._exit(0)
-        server = ServerThread(app)
+        
         return server
 
     def stop_server():
