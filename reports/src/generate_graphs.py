@@ -354,7 +354,8 @@ def _expose_explainer_custom_dashboard(_response, df_new_data):
     exp_dash = ExplainerDashboard(explainer, 
                                 CustomDashboard, mode='external',
                                 server=server, url_base_pathname="/explainer_dashboard/",
-                                header_hide_selector=True, port=8000, host="https://gp27techchallenge5.streamlit.app",
+                                header_hide_selector=True, port=8000, 
+                                host="https://gp27techchallenge5.streamlit.app",
                                 description = "Esta área do dashboard mostra o funcionamento do modelo, explicando como ele realizou as suas predições")
     # exp_dash.run(8050, mode='external')
     @server.route('/explainer_dashboard/')
@@ -366,6 +367,5 @@ def _expose_explainer_custom_dashboard(_response, df_new_data):
         ExplainerDashboard.terminate(8000)
     # exp_dash.run()
     # return return_dashboard()
-    os.system('iptables -A INPUT -p tcp --dport 8000 -j ACCEPT')
     print(exp_dash.server.instance_path)
     return "http://127.0.0.1:8050/"
