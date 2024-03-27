@@ -361,21 +361,26 @@ def _expose_explainer_custom_dashboard(_response, df_new_data):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     if sock.connect_ex(('0.0.0.0',5000)) != 0:
         _serve_flask(exp_dash, app)
+    else:
+        shutdown_server()
+        _serve_flask(exp_dash, app)
     sock.close()
     return "https://0.0.0.0:5000/explainer_dashboard/"
+
+def shutdown_server():
+    from flask import request
+    global server
+    func = request.environ.get('werkzeug.server.shutdown')
+    if func is None:
+        raise RuntimeError('Not running with the Werkzeug Server')
+    func()
+    server.shutdown()
 
 def _serve_flask(exp_dash, app_dash):
     from werkzeug.serving import make_server
     import flask, threading, dash
-    from flask import request
 
-    def shutdown_server():
-        global server
-        func = request.environ.get('werkzeug.server.shutdown')
-        if func is None:
-            raise RuntimeError('Not running with the Werkzeug Server')
-        func()
-        server.shutdown()
+    
     class ServerThread(threading.Thread):
         def __init__(self, app):
             threading.Thread.__init__(self)
