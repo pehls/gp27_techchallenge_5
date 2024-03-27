@@ -366,6 +366,6 @@ def _expose_explainer_custom_dashboard(_response, df_new_data):
         ExplainerDashboard.terminate(8000)
     # exp_dash.run()
     # return return_dashboard()
-    os.system('EXPOSE 8000')
+    os.system('sudo iptables -A INPUT -p tcp --dport 8000 -j ACCEPT')
     print(exp_dash.server.instance_path)
     return "http://127.0.0.1:8050/"
