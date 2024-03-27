@@ -341,9 +341,11 @@ def _expose_explainer_custom_dashboard(_response, df_new_data):
                 ])
                 
             ])
-    import dash
+    import dash, flask
     app = dash.Dash(__name__)
-    server = app.server
+
+    server =  flask.Flask(__name__)
+
     app.scripts.config.serve_locally=False
     app.css.config.serve_locally=False
     
@@ -354,24 +356,49 @@ def _expose_explainer_custom_dashboard(_response, df_new_data):
                                 header_hide_selector=True, 
                                 description = "Esta área do dashboard mostra o funcionamento do modelo, explicando como ele realizou as suas predições")
     # exp_dash.run(8050, mode='inline')
+    _serve_flask(exp_dash)
+    return "https://0.0.0.0:5000/explainer_dashboard/"
 
+def _serve_flask(exp_dash):
+    from werkzeug.serving import make_server
+    import flask, threading
     from flask import request
+
     def shutdown_server():
         func = request.environ.get('werkzeug.server.shutdown')
         if func is None:
             raise RuntimeError('Not running with the Werkzeug Server')
         func()
+    class ServerThread(threading.Thread):
 
-    @server.route('/explainer_dashboard/')
-    def return_dashboard():
-        return exp_dash.app.index()
-    
-    @server.route('/quit')
-    def _quit():
-        import os
-        shutdown_server()
-        os._exit(0)
+        def __init__(self, app):
+            threading.Thread.__init__(self)
+            self.server = make_server('0.0.0.0', 5000, app)
+            self.ctx = app.app_context()
+            self.ctx.push()
 
-    app.server.run(port=8050, host='0.0.0.0')
-    return return_dashboard()
-    return "http://127.0.0.1:8050/"
+        def run(self):
+            self.server.serve_forever()
+
+        def shutdown(self):
+            self.server.shutdown()
+
+    def start_server():
+        global server
+        app = flask.Flask('myapp')
+        @server.route('/explainer_dashboard/')
+        def return_dashboard():
+            return exp_dash.app.index()
+        
+        @server.route('/quit')
+        def _quit():
+            import os
+            shutdown_server()
+            stop_server()
+            os._exit(0)
+        server = ServerThread(app)
+        server.start()
+
+    def stop_server():
+        global server
+        server.shutdown()
