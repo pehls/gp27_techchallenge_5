@@ -8,7 +8,7 @@ st.title('Simulação')
 # df_base = get_data._df_passos_magicos()
 df_model, cols = get_data._get_modelling_data(get_data._df_passos_magicos())
 model_response_train = (train_model._run_xgboost(df_model, predict=True, retrain=False))
- 
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 st.markdown(f"""             
     #### Utilização dos modelos
@@ -37,13 +37,23 @@ with col1:
 with col2:
     if st.button("Resetar Simulações (Caso os detalhes não apareçam abaixo)"):
         ExplainerDashboard.terminate(8000)
+        for key in st.session_state.keys():
+            del st.session_state[key]
+        if sock.connect_ex(('0.0.0.0',8000)) != 0:
+                if file is not None and load_file:
+                    resp = generate_graphs._expose_explainer_custom_dashboard(
+                            model_response_train, 
+                            df_new_data= get_data._load_new_data(file)['df']
+                            )
+                else:
+                    st.warning("Não esqueça de carregar o arquivo nas Instruções!")
+                sock.close()
 
 if file is not None:
     response_new_data = get_data._load_new_data(file)
     if (load_file):
         if (response_new_data['status_ok']):
             df_new_data = response_new_data['df']
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             if sock.connect_ex(('0.0.0.0',8000)) != 0:
                 resp = generate_graphs._expose_explainer_custom_dashboard(
                         model_response_train, 
