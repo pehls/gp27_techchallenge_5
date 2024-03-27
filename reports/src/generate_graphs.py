@@ -397,6 +397,7 @@ def _serve_flask(exp_dash):
             stop_server()
             os._exit(0)
         server = ServerThread(app)
+        return_dashboard()
         server.start()
 
     def stop_server():
