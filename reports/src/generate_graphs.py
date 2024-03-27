@@ -390,7 +390,7 @@ def _serve_flask(exp_dash, app_dash):
 
     def start_server():
         global server
-        app = flask.Flask('myapp')
+        # app = flask.Flask('myapp')
         server = ServerThread(app)
 
         @app.route('/explainer_dashboard/')
