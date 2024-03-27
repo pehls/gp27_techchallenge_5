@@ -265,7 +265,7 @@ def _expose_explainer_custom_dashboard(_response, df_new_data):
     class CustomDashboard(ExplainerComponent):
         def __init__(self, explainer, title="Previsões e Variáveis Decisórias", **kwargs):
             super().__init__(explainer, title="Previsões e Variáveis Decisórias")
-            self.pos_label = True
+            self.pos_label = 1
             self.index = ClassifierRandomIndexComponent(explainer,
                                                         hide_title=True, hide_index=False,
                                                         hide_slider=True, hide_labels=True,
