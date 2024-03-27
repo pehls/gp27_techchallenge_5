@@ -373,7 +373,6 @@ def _serve_flask(exp_dash, app_dash):
         func()
         server.shutdown()
     class ServerThread(threading.Thread):
-
         def __init__(self, app):
             threading.Thread.__init__(self)
             self.server = make_server('0.0.0.0', 5000, app)
@@ -409,6 +408,6 @@ def _serve_flask(exp_dash, app_dash):
     except:
         print("ok")
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    if sock.connect_ex(('127.0.0.1',80)) != 0:
+    if sock.connect_ex(('0.0.0.0',5000)) != 0:
         app.run_server(port=5000, host='0.0.0.0')
     sock.close()
