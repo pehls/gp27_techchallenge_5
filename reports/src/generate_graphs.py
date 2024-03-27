@@ -387,12 +387,12 @@ def _serve_flask(exp_dash, app_dash):
         global server
         app = flask.Flask('myapp')
         server = ServerThread(app)
-        
-        @server.route('/explainer_dashboard/')
+
+        @app.route('/explainer_dashboard/')
         def return_dashboard():
             return exp_dash.app.index()
         
-        @server.route('/quit')
+        @app.route('/quit')
         def _quit():
             import os
             shutdown_server()
