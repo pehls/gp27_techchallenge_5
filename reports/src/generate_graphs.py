@@ -368,11 +368,8 @@ def _expose_explainer_custom_dashboard(_response, df_new_data):
     return "https://0.0.0.0:5000/explainer_dashboard/"
 
 def shutdown_server():
-    from flask import request
-    func = request.environ.get('werkzeug.server.shutdown')
-    if func is None:
-        raise RuntimeError('Not running with the Werkzeug Server')
-    func()
+    import urllib.request
+    urllib.request.urlopen("http://0.0.0.0:5000/quit/").read()
 
 def _serve_flask(exp_dash, app_dash):
     from werkzeug.serving import make_server
@@ -402,7 +399,8 @@ def _serve_flask(exp_dash, app_dash):
         
         @app.route('/quit/')
         def quit():
-            shutdown_server()
+            server.shutdown()
+            # shutdown_server()
         return app
     
     app = dash.Dash(server=start_server())
