@@ -365,10 +365,12 @@ def _serve_flask(exp_dash, app_dash):
     from flask import request
 
     def shutdown_server():
+        global server
         func = request.environ.get('werkzeug.server.shutdown')
         if func is None:
             raise RuntimeError('Not running with the Werkzeug Server')
         func()
+        server.shutdown()
     class ServerThread(threading.Thread):
 
         def __init__(self, app):
@@ -394,16 +396,15 @@ def _serve_flask(exp_dash, app_dash):
         
         @app.route('/quit')
         def _quit():
-            import os
             shutdown_server()
-            stop_server()
-            os._exit(0)
         
-        return server
+        return app
 
-    def stop_server():
-        global server
-        server.shutdown()
 
     app = dash.Dash(server=start_server())
+    try:
+        shutdown_server()
+    except:
+        print("ok")
+
     app.run_server(port=5000, host='0.0.0.0')
