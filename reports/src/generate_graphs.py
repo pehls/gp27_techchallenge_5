@@ -346,7 +346,7 @@ def _expose_explainer_custom_dashboard(_response, df_new_data):
     server = app.server
     app.scripts.config.serve_locally=False
     app.css.config.serve_locally=False
-
+    
     explainer = ClassifierExplainer(_response['pipeline'], df_new_data, _response['pipeline'].predict(df_new_data))
     exp_dash = ExplainerDashboard(explainer, 
                                 CustomDashboard, 
@@ -363,6 +363,6 @@ def _expose_explainer_custom_dashboard(_response, df_new_data):
     def _quit():
         import os
         os._exit(0)
-
+    app.server.run(port=8050, host='0.0.0.0')
     return return_dashboard()
     return "http://127.0.0.1:8050/"
