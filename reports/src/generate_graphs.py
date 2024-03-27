@@ -358,7 +358,7 @@ def _expose_explainer_custom_dashboard(_response, df_new_data):
                                 description = "Esta área do dashboard mostra o funcionamento do modelo, explicando como ele realizou as suas predições")
     # exp_dash.run(8050, mode='external')
     @server.route('/explainer_dashboard/')
-    def return_dashboard():
+    def explainer_dashboard():
         return exp_dash.app.layout()
     
     @server.route('/quit/')
