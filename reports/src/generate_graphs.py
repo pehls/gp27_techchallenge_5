@@ -342,6 +342,7 @@ def _expose_explainer_custom_dashboard(_response, df_new_data):
                 
             ])
     import dash, flask
+    import socket
     app = dash.Dash(__name__)
 
     server =  flask.Flask(__name__)
@@ -356,14 +357,17 @@ def _expose_explainer_custom_dashboard(_response, df_new_data):
                                 header_hide_selector=True, 
                                 description = "Esta área do dashboard mostra o funcionamento do modelo, explicando como ele realizou as suas predições")
     # exp_dash.run(8050, mode='inline')
-    _serve_flask(exp_dash, app)
+    
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    if sock.connect_ex(('0.0.0.0',5000)) != 0:
+        _serve_flask(exp_dash, app)
+    sock.close()
     return "https://0.0.0.0:5000/explainer_dashboard/"
 
 def _serve_flask(exp_dash, app_dash):
     from werkzeug.serving import make_server
     import flask, threading, dash
     from flask import request
-    import socket
 
     def shutdown_server():
         global server
@@ -394,20 +398,16 @@ def _serve_flask(exp_dash, app_dash):
         def return_dashboard():
             return exp_dash.app.index()
         
-        @app.route('/quit')
-        def _quit():
+        @app.route('/quit/')
+        def quit():
             shutdown_server()
         
         return app
-
-
+    
     app = dash.Dash(server=start_server())
     try:
         shutdown_server()
-        
     except:
         print("ok")
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    if sock.connect_ex(('0.0.0.0',5000)) != 0:
         app.run_server(port=5000, host='0.0.0.0')
-    sock.close()
+    
