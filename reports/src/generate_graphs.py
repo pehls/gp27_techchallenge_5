@@ -359,10 +359,10 @@ def _expose_explainer_custom_dashboard(_response, df_new_data):
     def return_dashboard():
         return exp_dash.app.index()
     
-    @app.route('/quit')
+    @server.route('/quit')
     def _quit():
         import os
         os._exit(0)
-        
+
     return return_dashboard()
     return "http://127.0.0.1:8050/"
