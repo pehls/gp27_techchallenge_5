@@ -371,7 +371,7 @@ def shutdown_server():
     import urllib.request
     urllib.request.urlopen("http://0.0.0.0:5000/quit/").read()
 
-def _serve_flask(exp_dash, app_dash):
+def _serve_flask(exp_dash, app):
     from werkzeug.serving import make_server
     import flask, threading, dash
 
