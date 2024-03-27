@@ -1,0 +1,11 @@
+runtime: python
+env: flex
+
+runtime_config:
+  operating_system: "ubuntu22"
+  python_version: "3.10.4"
+
+entrypoint: Streamlit run "reports/Análise.py" --server.port 8501
+
+automatic_scaling:
+  max_num_instances: 1
