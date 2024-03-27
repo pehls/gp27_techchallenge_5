@@ -356,12 +356,12 @@ def _expose_explainer_custom_dashboard(_response, df_new_data):
                                 header_hide_selector=True, 
                                 description = "Esta área do dashboard mostra o funcionamento do modelo, explicando como ele realizou as suas predições")
     # exp_dash.run(8050, mode='inline')
-    _serve_flask(exp_dash)
+    _serve_flask(exp_dash, app)
     return "https://0.0.0.0:5000/explainer_dashboard/"
 
-def _serve_flask(exp_dash):
+def _serve_flask(exp_dash, app_dash):
     from werkzeug.serving import make_server
-    import flask, threading
+    import flask, threading, dash
     from flask import request
 
     def shutdown_server():
@@ -397,9 +397,11 @@ def _serve_flask(exp_dash):
             stop_server()
             os._exit(0)
         server = ServerThread(app)
-        return_dashboard()
-        server.start()
+        return server
 
     def stop_server():
         global server
         server.shutdown()
+
+    app = dash.Dash(server=start_server())
+    app.run_server(port=5000, host='0.0.0.0')

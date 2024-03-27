@@ -34,7 +34,7 @@ with col1:
     load_file = st.checkbox("Carregar arquivo")
 with col2:
     if st.button("Resetar Simulações (Caso os detalhes não apareçam abaixo)"):
-        st.components.v1.iframe('http://localhost:8050/quit/', width=0, height=0)
+        st.components.v1.iframe('http://0.0.0.0:5000/quit/', width=0, height=0)
 
 if file is not None:
     response_new_data = get_data._load_new_data(file)
@@ -52,7 +52,7 @@ if (file is not None) and load_file:
             df_new_data=df_new_data
             )
     # st.write(resp)
-    st.components.v1.iframe('https://0.0.0.0:8000/explainer_dashboard/', width=1200, height=900, scrolling=True)
+    st.components.v1.iframe('https://0.0.0.0:5000/explainer_dashboard/', width=1200, height=900, scrolling=True)
 
 # if (file is not None) and load_file:
 #     while not(os.path.isfile("file.html")):
