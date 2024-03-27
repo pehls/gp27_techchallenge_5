@@ -1,6 +1,8 @@
 import streamlit as st
 from src import get_data, train_model, generate_graphs
 import os, time
+import socket
+from explainerdashboard import ExplainerDashboard
 st.title('Simulação')
 
 # df_base = get_data._df_passos_magicos()
@@ -34,25 +36,35 @@ with col1:
     load_file = st.checkbox("Carregar arquivo")
 with col2:
     if st.button("Resetar Simulações (Caso os detalhes não apareçam abaixo)"):
-        st.components.v1.iframe('http://0.0.0.0:5000/quit/', width=0, height=0)
+        ExplainerDashboard.terminate(8000)
 
 if file is not None:
     response_new_data = get_data._load_new_data(file)
     if (load_file):
         if (response_new_data['status_ok']):
             df_new_data = response_new_data['df']
-           
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            if sock.connect_ex(('0.0.0.0',8000)) != 0:
+                resp = generate_graphs._expose_explainer_custom_dashboard(
+                        model_response_train, 
+                        df_new_data=df_new_data
+                        )
+                sock.close()
+            else:
+                ExplainerDashboard.terminate(8000)
+                generate_graphs._expose_explainer_custom_dashboard(
+                        model_response_train, 
+                        df_new_data=df_new_data
+                        )
         else:
             st.warning(f"Erro nas colunas {','.join(response_new_data['cols_diff'])}")
 if (file is None) and load_file:
     st.warning("Não esqueça de carregar o arquivo nas Instruções!")
-if (file is not None) and load_file:
-    resp = generate_graphs._expose_explainer_custom_dashboard(
-            model_response_train, 
-            df_new_data=df_new_data
-            )
+
     # st.write(resp)
-    st.components.v1.iframe('http://0.0.0.0:5000/explainer_dashboard/', width=1200, height=900, scrolling=True)
+time.sleep(5)
+st.components.v1.iframe('http://127.0.0.1:8000/explainer_dashboard/',
+                            width=1200, height=900, scrolling=True)
 
 # if (file is not None) and load_file:
 #     while not(os.path.isfile("file.html")):

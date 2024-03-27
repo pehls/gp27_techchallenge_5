@@ -25,7 +25,10 @@ from explainerdashboard.custom import (
 )
 from explainerdashboard import ClassifierExplainer, RegressionExplainer
 from explainerdashboard import ExplainerDashboard
-
+from werkzeug.serving import run_simple, make_server
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
+import flask, threading, dash
+import socket
 
 from src import train_model, get_data
 
@@ -341,72 +344,26 @@ def _expose_explainer_custom_dashboard(_response, df_new_data):
                 ])
                 
             ])
-    import dash, flask
-    import socket
+    import dash
     app = dash.Dash(__name__)
-
-    server =  flask.Flask(__name__)
-
+    server = app.server
     app.scripts.config.serve_locally=False
     app.css.config.serve_locally=False
-    
+
     explainer = ClassifierExplainer(_response['pipeline'], df_new_data, _response['pipeline'].predict(df_new_data))
     exp_dash = ExplainerDashboard(explainer, 
-                                CustomDashboard, 
+                                CustomDashboard, mode='external',
                                 server=server, url_base_pathname="/explainer_dashboard/",
-                                header_hide_selector=True, 
+                                header_hide_selector=True, port=8000,
                                 description = "Esta área do dashboard mostra o funcionamento do modelo, explicando como ele realizou as suas predições")
-    # exp_dash.run(8050, mode='inline')
+    # exp_dash.run(8050, mode='external')
+    @server.route('/explainer_dashboard/')
+    def return_dashboard():
+        return exp_dash.app.layout()
     
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    if sock.connect_ex(('0.0.0.0',5000)) != 0:
-        _serve_flask(exp_dash, app)
-    else:
-        shutdown_server()
-        _serve_flask(exp_dash, app)
-    sock.close()
-    return "https://0.0.0.0:5000/explainer_dashboard/"
-
-def shutdown_server():
-    import urllib.request
-    urllib.request.urlopen("http://0.0.0.0:5000/quit/").read()
-
-def _serve_flask(exp_dash, app):
-    from werkzeug.serving import make_server
-    import flask, threading, dash
-
-    class ServerThread(threading.Thread):
-        def __init__(self, app):
-            threading.Thread.__init__(self)
-            self.server = make_server('0.0.0.0', 5000, app)
-            self.ctx = app.app_context()
-            self.ctx.push()
-
-        def run(self):
-            self.server.serve_forever()
-
-        def shutdown(self):
-            self.server.shutdown()
-
-    def start_server():
-        global server
-        # app = flask.Flask('myapp')
-        server = ServerThread(app)
-
-        @app.route('/explainer_dashboard/')
-        def return_dashboard():
-            return exp_dash.app.index()
-        
-        @app.route('/quit/')
-        def quit():
-            server.shutdown()
-            # shutdown_server()
-        return app
-    
-    app = dash.Dash(server=start_server())
-    try:
-        shutdown_server()
-    except:
-        print("ok")
-        app.run_server(port=5000, host='0.0.0.0')
-    
+    @server.route('/quit/')
+    def quit():
+        ExplainerDashboard.terminate(8000)
+    # exp_dash.run()
+    # return return_dashboard()
+    return "http://127.0.0.1:8050/"
