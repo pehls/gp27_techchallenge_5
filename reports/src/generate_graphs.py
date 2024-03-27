@@ -344,7 +344,7 @@ def _expose_explainer_custom_dashboard(_response, df_new_data):
                 ])
                 
             ])
-    import dash
+    import dash, os
     app = dash.Dash(__name__)
     server = app.server
     app.scripts.config.serve_locally=False
