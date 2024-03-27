@@ -363,6 +363,7 @@ def _serve_flask(exp_dash, app_dash):
     from werkzeug.serving import make_server
     import flask, threading, dash
     from flask import request
+    import socket
 
     def shutdown_server():
         global server
@@ -404,7 +405,10 @@ def _serve_flask(exp_dash, app_dash):
     app = dash.Dash(server=start_server())
     try:
         shutdown_server()
+        
     except:
         print("ok")
-
-    app.run_server(port=5000, host='0.0.0.0')
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    if sock.connect_ex(('127.0.0.1',80)) != 0:
+        app.run_server(port=5000, host='0.0.0.0')
+    sock.close()
