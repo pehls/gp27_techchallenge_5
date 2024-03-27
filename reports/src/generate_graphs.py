@@ -359,12 +359,13 @@ def _expose_explainer_custom_dashboard(_response, df_new_data):
     # exp_dash.run(8050, mode='external')
     @server.route('/explainer_dashboard/')
     def explainer_dashboard():
-        return exp_dash.app.layout()
+        return exp_dash.app.index()
     
     @server.route('/quit/')
     def quit():
         ExplainerDashboard.terminate(8000)
     # exp_dash.run()
     # return return_dashboard()
+    os.system('EXPOSE 8000')
     print(exp_dash.server.instance_path)
     return "http://127.0.0.1:8050/"
