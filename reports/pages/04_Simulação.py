@@ -27,10 +27,16 @@ with st.expander("Instruções"):
 
     file = st.file_uploader(
         'Selecione o arquivo (xlsx) com os dados dos alunos em Y-1 e Y (ano atual)', 
-        type=['xlsx']
+        type=['xlsx','application/vnd.ms-excel']
         )
-    
-load_file = st.checkbox("Carregar arquivo")
+col1, col2 = st.columns(2)
+with col1:
+    load_file = st.checkbox("Carregar arquivo")
+with col2:
+    reset_simulations = st.checkbox("Resetar Simulações (Caso os detalhes não apareçam abaixo)")
+
+if (reset_simulations):
+    st.components.v1.iframe('http://localhost:8050/quit/', width=0, height=0)
 
 if file is not None:
     response_new_data = get_data._load_new_data(file)
@@ -48,7 +54,8 @@ if (file is not None) and load_file:
             df_new_data=df_new_data
             )
     # st.write(resp)
-    st.components.v1.iframe('http://127.0.0.1:8050/explainer_dashboard/', width=1200, height=900, scrolling=True)
+    st.components.v1.iframe('http://localhost:8050/explainer_dashboard/', width=1200, height=900, scrolling=True)
+
 # if (file is not None) and load_file:
 #     while not(os.path.isfile("file.html")):
 #         time.sleep(5)
