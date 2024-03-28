@@ -1,9 +1,15 @@
 import streamlit as st
+st.set_page_config(layout="wide")
+
 from src import get_data, train_model, generate_graphs
 import os, time
 import socket
 from explainerdashboard import ExplainerDashboard
+import numpy as np
+
 st.title('Simulação')
+
+
 
 # df_base = get_data._df_passos_magicos()
 df_model, cols = get_data._get_modelling_data(get_data._df_passos_magicos())
@@ -33,56 +39,98 @@ with st.expander("Instruções"):
         )
 col1, col2 = st.columns(2)
 with col1:
-    load_file = st.checkbox("Carregar arquivo")
+    load_file = st.button("Carregar arquivo")
 with col2:
     if st.button("Resetar Simulações (Caso os detalhes não apareçam abaixo)"):
-        ExplainerDashboard.terminate(8000)
-        for key in st.session_state.keys():
-            del st.session_state[key]
-        if sock.connect_ex(('0.0.0.0',8000)) != 0:
-                if file is not None and load_file:
-                    resp = generate_graphs._expose_explainer_custom_dashboard(
-                            model_response_train, 
-                            df_new_data= get_data._load_new_data(file)['df']
-                            )
-                else:
-                    st.warning("Não esqueça de carregar o arquivo nas Instruções!")
-                sock.close()
+        print('button')
 
 if file is not None:
     response_new_data = get_data._load_new_data(file)
     if (load_file):
         if (response_new_data['status_ok']):
             df_new_data = response_new_data['df']
-            if sock.connect_ex(('0.0.0.0',8000)) != 0:
-                resp = generate_graphs._expose_explainer_custom_dashboard(
-                        model_response_train, 
-                        df_new_data=df_new_data
-                        )
-                sock.close()
-            else:
-                ExplainerDashboard.terminate(8000)
-                generate_graphs._expose_explainer_custom_dashboard(
-                        model_response_train, 
-                        df_new_data=df_new_data
-                        )
+            explainer = train_model.get_explainer(model_response_train, df_new_data)
         else:
             st.warning(f"Erro nas colunas {','.join(response_new_data['cols_diff'])}")
-if (file is None) and load_file:
-    st.warning("Não esqueça de carregar o arquivo nas Instruções!")
 
-    # st.write(resp)
-time.sleep(5)
-if sock.connect_ex(('0.0.0.0',8000)) != 0:
-    st.components.v1.iframe('http://127.0.0.1:8000/explainer_dashboard/',
-                                width=1200, height=900, scrolling=True)
+        st.divider()
+        
+        # criar selectbox pro aluno
+        _aluno = st.selectbox("Selecione um aluno", df_new_data.index)
 
-# if (file is not None) and load_file:
-#     while not(os.path.isfile("file.html")):
-#         time.sleep(5)
-#     with open("file.html") as html_file: 
-#         html_data = html_file.read()
-#     st.components.v1.iframe(
-#         html_data,
-#         width=None, height=900, scrolling=True
-#       )
+        col1, col2 = st.columns([0.7, 0.3])
+
+        with col1:
+            with st.container(border=True):
+                st.markdown("""## Contribuições
+**Como cada Variável contribuiu para a previsão?**
+                            
+Este gráfico mostra a contribuição que cada característica individual tem na previsão de uma observação 
+específica. As contribuições (a partir da média da população) somam-se à previsão final. Isso permite 
+explicar exatamente como cada previsão individual foi construída a partir de todos os ingredientes 
+individuais do modelo.""")
+
+                st.plotly_chart(
+                    explainer.plot_contributions(_aluno)
+                )
+        with col2:
+            with st.container(border=True):
+                st.markdown("""## Previsões & Probabilidades
+Mostra a probabilidade predita para cada situação, sendo False para não-evasão e True para Evasão.
+""")
+                st.plotly_chart(
+                    explainer.plot_prediction_result(_aluno)
+                )
+
+        col3, col4 = st.columns(2)
+
+        with col3:
+            with st.container(border=True):
+                st.markdown("""## Dependência Shap
+**Relação entre o valor da variável e o valor SHAP**
+                            
+Este gráfico mostra a relação entre as variáveis e seu valor shap, 
+fazendo com que consigamos investigar o relacionamento entre o valor das features e 
+o impacto na previsão. Você pode checar se o modelo usa as features de acordo com o
+esperado, ou usar o mesmo para aprender as relações que o modelo aprendeu entre
+as features de entrada e a saída predita. Em cinza, o NOME selecionado!                          
+""")
+                
+                subcol1, subcol2 = st.columns(2)
+                with subcol1:
+                    _coluna1 = st.selectbox(
+                        "Selecione a Coluna (eixo X)", 
+                        model_response_train['pipeline'][:-1].get_feature_names_out()
+                        )
+
+                with subcol2:
+                    _coluna2 = st.selectbox(
+                        "Selecione a Coluna (cores)", 
+                        list(set(model_response_train['pipeline'][:-1].get_feature_names_out()).difference(set([_coluna1])))
+                        )
+                
+                st.plotly_chart(
+                    explainer.plot_dependence(col=_coluna1, color_col=_coluna2, highlight_index=_aluno)
+                )
+        with col4:
+            with st.container(border=True):
+                st.markdown("""## Gráfico de Dependência Parcial
+**Como a previsão mudará se você mudar uma variável?**
+
+O gráfico de dependência parcial (pdp) mostra como seria a previsão do modelo
+se você alterar um recurso específico. O gráfico mostra uma amostra
+de observações e como essas observações mudariam com as mudanças aplicadas
+(linhas de grade). O efeito médio é mostrado em cinza. O efeito
+de alterar o recurso para um único Nome é
+mostrado em azul.                     
+""")
+                _coluna3 = st.selectbox(
+                        "Selecione a Coluna:", 
+                        model_response_train['pipeline'][:-1].get_feature_names_out()
+                        )
+                st.plotly_chart(
+                    explainer.plot_pdp(col=_coluna3, index=_aluno)
+                )
+                
+else:
+    st.warning("Não esqueça de selecionar o arquivo!")

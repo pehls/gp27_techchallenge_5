@@ -200,3 +200,8 @@ def _get_shap(_response):
 
     return df_plot
 
+@st.cache_resource
+def get_explainer(_response, df_new_data):
+    explainer = ClassifierExplainer(_response['pipeline'], df_new_data, _response['pipeline'].predict(df_new_data))
+    explainer.pos_label = 1
+    return explainer
