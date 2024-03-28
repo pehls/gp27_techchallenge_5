@@ -3,7 +3,6 @@ ansi2html==1.9.1
 asttokens==2.4.1
 attrs==23.2.0
 blinker==1.7.0
-BorutaShap==1.0.17
 cachetools==5.3.3
 certifi==2024.2.2
 charset-normalizer==3.3.2
