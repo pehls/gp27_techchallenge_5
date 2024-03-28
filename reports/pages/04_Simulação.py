@@ -71,6 +71,7 @@ individuais do modelo.""")
 
             st.plotly_chart(
                 explainer.plot_contributions(_aluno)
+                , use_container_width=True
             )
     with col2:
         with st.container(border=True):
@@ -79,6 +80,7 @@ Mostra a probabilidade predita para cada situação, sendo False para não-evas�
 """)
             st.plotly_chart(
                 explainer.plot_prediction_result(_aluno)
+                , use_container_width=True
             )
 
     col3, col4 = st.columns(2)
@@ -110,6 +112,7 @@ as features de entrada e a saída predita. Em cinza, o NOME selecionado!
             
             st.plotly_chart(
                 explainer.plot_dependence(col=_coluna1, color_col=_coluna2, highlight_index=_aluno)
+                , use_container_width=True
             )
     with col4:
         with st.container(border=True):
@@ -129,6 +132,7 @@ mostrado em azul.
                     )
             st.plotly_chart(
                 explainer.plot_pdp(col=_coluna3, index=_aluno)
+                , use_container_width=True
             )
                 
 else:
