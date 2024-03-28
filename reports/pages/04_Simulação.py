@@ -44,7 +44,7 @@ with col1:
 with col2:
     reload = st.button("Recarregar Simulações (Caso os detalhes não apareçam abaixo)")
 
-if file is not None or reload:
+if file is not None or (reload and file is not None):
     response_new_data = get_data._load_new_data(file)
     if (response_new_data['status_ok']):
         st.session_state['df_new_data'] = response_new_data['df']
