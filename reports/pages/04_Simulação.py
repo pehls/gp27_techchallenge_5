@@ -13,7 +13,7 @@ st.title('Simulação')
 
 # df_base = get_data._df_passos_magicos()
 df_model, cols = get_data._get_modelling_data(get_data._df_passos_magicos())
-df_example = get_data._load_new_data('data/processed/dado_simulacao.xlsx')['df']
+df_example = get_data._read_file('data/processed/dado_simulacao.xlsx')
 model_response_train = (train_model._run_xgboost(df_model, predict=True, retrain=False))
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 explainer = None

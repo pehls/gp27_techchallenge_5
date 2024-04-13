@@ -269,7 +269,7 @@ def _test_df_cols(df):
         , 'df':df
     }
 
-def _load_new_data(file_path):
+def _load_new_data_to_download(file_path):
     df = pd.read_excel(file_path)
     cols_in =  ['IDADE', 'IAA', 'IAN', 'IDA', 'IEG', 'INDE', 'IPP', 'IPS', 'IPV']
     if not(_test_df_cols(df)['status_ok']):
